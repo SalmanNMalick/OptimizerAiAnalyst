@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Specifi Profit Optimiser</title>
+  <script src="https://cdn.jsdelivr.net/npm/react@18/umd/react.production.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@babel/standalone@7/babel.min.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/tippy.js@6/dist/tippy-bundle.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+  <link href="https://unpkg.com/tippy.js@6/animations/scale.css" rel="stylesheet">
+  <style>
+    @keyframes slideIn {
+      from { transform: translateY(20px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+    .animate-slide-in {
+      animation: slideIn 0.5s ease-out;
+    }
+    .dark-mode {
+      background-color: #1a202c;
+      color: #e2e8f0;
+    }
+    .dark-mode .bg-white {
+      background-color: #2d3748;
+    }
+    .dark-mode .bg-gray-100 {
+      background-color: #4a5568;
+    }
+    .dark-mode .bg-gray-50 {
+      background-color: #4a5568;
+    }
+    .dark-mode .text-gray-700 {
+      color: #e2e8f0;
+    }
+  </style>
+</head>
+<body className="transition-colors duration-300">
+  <div id="root"></div>
+  <script type="text/babel">
+    const { useState, useEffect } = React;
+    const { jsPDF } = window.jspdf;
+
+    const billOfMaterials = [
+      { id: 1, name: "100” 4K DB100 TV Black Frame, Back & Glass", cost: 32083.10, retail: 54999.60, mpn: "DB100BB" },
+      { id: 2, name: "100” 4K DB100 TV White Frame, Back & Glass", cost: 32083.10, retail: 54999.60, mpn: "DB100WW" },
+      { id: 3, name: "AIM8 TWO Series 2, 8\" 2-way, In-Ceiling Speaker", cost: 196.67, retail: 590.00, mpn: "AIM282" },
+      { id: 4, name: "Cinema 100 CT System (240V)", cost: 550.89, retail: 1322.14, mpn: "1019000001" },
+      { id: 5, name: "Control4® EA-5 Entertainment and Automation Controller, V2", cost: 1054.95, retail: 1768.96, mpn: "C4-EA5-V2" },
+      { id: 6, name: "DIN-2MC2", cost: 301.00, retail: 722.40, mpn: "6501745" },
+      { id: 7, name: "Décor-1SC-(90-130in)", cost: 1433.24, retail: 3439.77, mpn: "1210000042" },
+      { id: 8, name: "ELA SC 200 ZW", cost: 786.44, retail: 2000.00, mpn: "EL-SC-200-ZW" },
+      { id: 9, name: "ELA-IP-IDV2-WH", cost: 216.27, retail: 415.99, mpn: "EL-IP-IDV2-WH" },
+      { id: 10, name: "ELA-IP-ODA4-BK", cost: 278.07, retail: 533.89, mpn: "EL-IP-ODA4-BK" },
+      { id: 11, name: "ELA-IP-ODA4-WH", cost: 289.20, retail: 533.99, mpn: "EL-IP-ODA4-WH" },
+      { id: 12, name: "ELA-NVR-2TB", cost: 660.37, retail: 1282.99, mpn: "EL-NVR-2TB" },
+      { id: 13, name: "Episode Mini AV Receiver | 5.1 Channel", cost: 491.25, retail: 893.94, mpn: "EA-MINI-5.1D-200" },
+      { id: 14, name: "KLI-CS-16-CSM", cost: 90.96, retail: 220.50, mpn: "1064162" },
+      { id: 15, name: "KOR-BRAVO-HDMI-1.5", cost: 40.02, retail: 57.99, mpn: "Bravo-HD0150" },
+      { id: 16, name: "MCA 525 v2", cost: 2036.85, retail: 4073.70, mpn: "1412000033" },
+      { id: 17, name: "Neeo Remote for Control4 (Black)", cost: 352.80, retail: 587.95, mpn: "NE-RMT-BL" },
+      { id: 18, name: "PRO-16RC", cost: 161.70, retail: 388.50, mpn: "1064446" },
+      { id: 19, name: "PRO-180RPC IN-CEILING SPEAKER", cost: 254.34, retail: 612.50, mpn: "1063967" },
+      { id: 20, name: "PRO-18RC", cost: 188.65, retail: 455.00, mpn: "1064447" },
+      { id: 21, name: "Pakedge 24 Port Managed Switch with 24 PoE or 12 PoE+ Ports EOS", cost: 761.45, retail: 1272.95, mpn: "SX-24P" },
+      { id: 22, name: "RAK-RAK-LINK", cost: 275.10, retail: 393.00, mpn: "RAK-LINK" },
+      { id: 23, name: "RAK-RAK8-MB", cost: 295.40, retail: 422.00, mpn: "RAK8-MB" },
+      { id: 24, name: "RAK-RCM-070 (Black Nickel)", cost: 127.40, retail: 218.40, mpn: "" },
+      { id: 25, name: "RAK-WCM-070 (Black Nickel)", cost: 166.60, retail: 285.60, mpn: "" },
+      { id: 26, name: "RAK-WDA-600", cost: 74.20, retail: 127.20, mpn: "WDA-600" },
+      { id: 27, name: "RAK-WML-300", cost: 74.20, retail: 127.20, mpn: "WML-300" },
+      { id: 28, name: "RAK-WMT-400", cost: 74.20, retail: 127.20, mpn: "WMT-400" },
+      { id: 29, name: "SLM-3400-C", cost: 188.65, retail: 455.00, mpn: "1063200" },
+      { id: 30, name: "Strong Carbon Series H-Bracket Adapter for Articulating Mounts", cost: 23.65, retail: 74.95, mpn: "SM-CB-H-BKT" },
+      { id: 31, name: "Strong Custom Series Floor Standing Rack - 20\" Depth | 42U", cost: 258.75, retail: 758.95, mpn: "SR-CUSTOM-42U-20IN" },
+      { id: 32, name: "UBI-UAP-AC-HD", cost: 231.71, retail: 327.12, mpn: "UAP-AC-HD" },
+      { id: 33, name: "UBI-UAP-AC-NANOHD", cost: 121.94, retail: 172.15, mpn: "UAP-nanoHD" },
+      { id: 34, name: "WK-HUB", cost: 263.90, retail: 377.00, mpn: "WK-HUB" },
+      { id: 35, name: "neo:Lite 70m Extender Set", cost: 140.00, retail: 282.00, mpn: "P8-HDBT-L-EXSET" },
+      { id: 36, name: "neo:Lite HDMI Extender Set", cost: 140.00, retail: 282.00, mpn: "P8-HDBT-L-EXSET" },
+    ];
+
+    const mockAIAPI = async (data) => {
+      const { totalMargin, targetMargin, items, laborHours } = data;
+      const suggestions = [];
+      
+      if (totalMargin < targetMargin) {
+        const marginGap = targetMargin - totalMargin;
+        suggestions.push(`Increase sell prices by approximately ${(marginGap * 100).toFixed(1)}% to meet target margin of ${targetMargin * 100}%.`);
+      }
+      
+      items.forEach(item => {
+        const itemMargin = item.sellPrice > 0 ? (item.sellPrice - item.cost) / item.sellPrice : 0;
+        if (itemMargin < 0.2) {
+          suggestions.push(`Low margin detected on ${item.name} (${(itemMargin * 100).toFixed(1)}%). Consider swapping with a higher-margin alternative or adjusting sell price.`);
+        }
+      });
+      
+      if (laborHours > 40) {
+        suggestions.push(`Labor hours (${laborHours}) exceed sustainable threshold of 40 hours. Consider reducing hours or hiring additional staff.`);
+      }
+      
+      const health = totalMargin >= targetMargin ? 'green' : totalMargin >= targetMargin * 0.7 ? 'amber' : 'red';
+      const summary = `The proposal's profitability is currently ${health.toUpperCase()}. Total margin is ${(totalMargin * 100).toFixed(1)}% against a target of ${(targetMargin * 100).toFixed(1)}%. ${suggestions.length > 0 ? 'Review the suggestions below to optimize profitability.' : 'The quote is financially healthy.'}`;
+      
+      return { suggestions, summary, health };
+    };
+
+    const ProfitOptimiser = () => {
+      const [items, setItems] = useState([{ id: 1, name: '', cost: 0, sellPrice: 0, quantity: 1 }]);
+      const [laborHours, setLaborHours] = useState(0);
+      const [laborCost, setLaborCost] = useState(50);
+      const [overheads, setOverheads] = useState(0);
+      const [targetMargin, setTargetMargin] = useState(0.3);
+      const [results, setResults] = useState(null);
+      const [aiSuggestions, setAiSuggestions] = useState([]);
+      const [aiSummary, setAiSummary] = useState('');
+      const [health, setHealth] = useState('amber');
+      const [darkMode, setDarkMode] = useState(false);
+
+      useEffect(() => {
+        if (window.tippy) {
+          tippy('[data-tippy-content]', {
+            animation: 'scale',
+            theme: 'light-border',
+          });
+        }
+      }, []);
+
+      useEffect(() => {
+        document.body.classList.toggle('dark-mode', darkMode);
+      }, [darkMode]);
+
+      const handleProductSelect = (id, name) => {
+        const product = billOfMaterials.find(p => p.name === name);
+        if (product) {
+          setItems(items.map(item => 
+            item.id === id ? { ...item, name, cost: product.cost, sellPrice: product.retail } : item
+          ));
+        }
+      };
+
+      const calculateProfitability = () => {
+        const totalCost = items.reduce((sum, item) => sum + item.cost * item.quantity, 0);
+        const totalRevenue = items.reduce((sum, item) => sum + item.sellPrice * item.quantity, 0);
+        const laborTotal = laborHours * laborCost;
+        const totalExpenses = totalCost + laborTotal + overheads;
+        const grossProfit = totalRevenue - totalExpenses;
+        const totalMargin = totalRevenue > 0 ? grossProfit / totalRevenue : 0;
+
+        return {
+          totalCost,
+          totalRevenue,
+          laborTotal,
+          totalExpenses,
+          grossProfit,
+          totalMargin,
+          items: items.map(item => ({
+            ...item,
+            margin: item.sellPrice > 0 ? (item.sellPrice - item.cost) / item.sellPrice : 0,
+            isLowMargin: item.sellPrice > 0 && (item.sellPrice - item.cost) / item.sellPrice < 0.2,
+          })),
+        };
+      };
+
+      const handleSubmit = async (e) => {
+        e.preventDefault();
+        const calcResults = calculateProfitability();
+        setResults(calcResults);
+
+        const aiResponse = await mockAIAPI({
+          totalMargin: calcResults.totalMargin,
+          targetMargin,
+          items: calcResults.items,
+          laborHours,
+          laborCost,
+          overheads,
+        });
+
+        setAiSuggestions(aiResponse.suggestions);
+        setAiSummary(aiResponse.summary);
+        setHealth(aiResponse.health);
+      };
+
+      const addItem = () => {
+        setItems([...items, { id: items.length + 1, name: '', cost: 0, sellPrice: 0, quantity: 1 }]);
+      };
+
+      const updateItem = (id, field, value) => {
+        setItems(items.map(item => item.id === id ? { ...item, [field]: value } : item));
+      };
+
+      const removeItem = (id) => {
+        setItems(items.filter(item => item.id !== id));
+      };
+
+      const exportToCSV = () => {
+        if (!results) return;
+        const headers = ['Product', 'Cost', 'Sell Price', 'Quantity', 'Margin'];
+        const rows = results.items.map(item => [
+          `"${item.name.replace(/"/g, '""')}"`,
+          item.cost.toFixed(2),
+          item.sellPrice.toFixed(2),
+          item.quantity,
+          `${(item.margin * 100).toFixed(1)}%`,
+        ]);
+        const laborTotal = laborHours * laborCost;
+        const csvContent = [
+          headers.join(','),
+          ...rows.map(row => row.join(',')),
+          [],
+          ['Summary'],
+          ['Total Revenue', results.totalRevenue.toFixed(2)],
+          ['Total Expenses', results.totalExpenses.toFixed(2)],
+          ['Gross Profit', results.grossProfit.toFixed(2)],
+          ['Profit Margin', `${(results.totalMargin * 100).toFixed(1)}%`],
+          ['Labor Hours', laborHours],
+          ['Labor Cost', laborTotal.toFixed(2)],
+          ['Overheads', overheads.toFixed(2)],
+          ['Target Margin', `${(targetMargin * 100).toFixed(1)}%`],
+        ].join('\n');
+
+        const blob = new Blob([csvContent], { type: 'text/csv' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'profit_optimiser_report.csv';
+        a.click();
+        URL.revokeObjectURL(url);
+      };
+
+      const exportToPDF = () => {
+        if (!results) return;
+        const laborTotal = laborHours * laborCost;
+        const doc = new jsPDF();
+        
+        doc.setFontSize(16);
+        doc.text('Specifi Profit Optimiser Report', 20, 20);
+        
+        doc.setFontSize(12);
+        doc.text('Quote Summary', 20, 40);
+        doc.text(`Total Revenue: $${results.totalRevenue.toFixed(2)}`, 20, 50);
+        doc.text(`Total Expenses: $${results.totalExpenses.toFixed(2)}`, 20, 60);
+        doc.text(`Gross Profit: $${results.grossProfit.toFixed(2)}`, 20, 70);
+        doc.text(`Profit Margin: ${(results.totalMargin * 100).toFixed(1)}%`, 20, 80);
+        doc.text(`Labor Hours: ${laborHours}`, 20, 90);
+        doc.text(`Labor Cost: $${laborTotal.toFixed(2)}`, 20, 100);
+        doc.text(`Overheads: $${overheads.toFixed(2)}`, 20, 110);
+        doc.text(`Target Margin: ${(targetMargin * 100).toFixed(1)}%`, 20, 120);
+        
+        doc.setFontSize(12);
+        doc.text(`Profitability Health: ${health.toUpperCase()}`, 20, 140);
+        
+        doc.text('AI-Generated Summary', 20, 160);
+        const summaryLines = doc.splitTextToSize(aiSummary, 170);
+        doc.text(summaryLines, 20, 170);
+        
+        let y = 170 + summaryLines.length * 10 + 10;
+        doc.text('AI Suggestions', 20, y);
+        aiSuggestions.forEach((suggestion, index) => {
+          const suggestionLines = doc.splitTextToSize(`- ${suggestion}`, 170);
+          doc.text(suggestionLines, 20, y + 10 + index * 10);
+          y += suggestionLines.length * 10;
+        });
+        
+        y += 20;
+        doc.text('Line Items', 20, y);
+        const tableData = results.items.map(item => [
+          item.name,
+          `$${item.cost.toFixed(2)}`,
+          `$${item.sellPrice.toFixed(2)}`,
+          item.quantity.toString(),
+          `${(item.margin * 100).toFixed(1)}%`,
+        ]);
+        doc.autoTable({
+          startY: y + 10,
+          head: [['Product', 'Cost', 'Sell Price', 'Quantity', 'Margin']],
+          body: tableData,
+          theme: 'grid',
+          styles: { fontSize: 10 },
+        });
+        
+        y = doc.lastAutoTable.finalY + 10;
+        doc.text('Additional Notes', 20, y);
+        doc.text('This report was generated by Specifi Profit Optimiser.', 20, y + 10);
+        doc.text('For more information, visit www.example.com', 20, y + 20);
+        
+        doc.save('profit_optimiser_report.pdf');
+      };
+
+      return (
+        <div className="min-h-screen">
+          <header className="bg-blue-600 text-white p-4 shadow-md">
+            <div className="container mx-auto flex justify-between items-center">
+              <div className="flex items-center space-x-4">
+                <h1 className="text-2xl font-bold">Specifi Profit Optimiser</h1>
+              </div>
+              <button
+                className="bg-gray-800 hover:bg-gray-700 text-white px-4 py-2 rounded"
+                onClick={() => setDarkMode(!darkMode)}
+                data-tippy-content={darkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}
+              >
+                {darkMode ? "☀️ Light" : "🌙 Dark"}
+              </button>
+            </div>
+          </header>
+          <div className="container mx-auto p-6 max-w-5xl">
+            <div className="bg-white shadow-lg rounded-lg p-8 mb-8 animate-slide-in">
+              <h2 className="text-2xl font-semibold mb-6 text-gray-800">Input Quote Details</h2>
+              <div className="space-y-6">
+                {items.map(item => (
+                  <div key={item.id} className="flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-4 items-center bg-gray-50 p-4 rounded-lg">
+                    <select
+                      className="border rounded p-2 w-full sm:w-1/3 focus:ring-2 focus:ring-blue-500"
+                      value={item.name}
+                      onChange={e => handleProductSelect(item.id, e.target.value)}
+                      data-tippy-content="Select a product from the bill of materials"
+                    >
+                      <option value="">Select Product</option>
+                      {billOfMaterials.map(product => (
+                        <option key={product.id} value={product.name}>
+                          {product.name}
+                        </option>
+                      ))}
+                    </select>
+                    <input
+                      type="number"
+                      placeholder="Cost"
+                      className="border rounded p-2 w-full sm:w-1/6 focus:ring-2 focus:ring-blue-500"
+                      value={item.cost}
+                      onChange={e => updateItem(item.id, 'cost', parseFloat(e.target.value) || 0)}
+                      data-tippy-content="Enter the cost price"
+                    />
+                    <input
+                      type="number"
+                      placeholder="Sell Price"
+                      className="border rounded p-2 w-full sm:w-1/6 focus:ring-2 focus:ring-blue-500"
+                      value={item.sellPrice}
+                      onChange={e => updateItem(item.id, 'sellPrice', parseFloat(e.target.value) || 0)}
+                      data-tippy-content="Enter the selling price"
+                    />
+                    <input
+                      type="number"
+                      placeholder="Quantity"
+                      className="border rounded p-2 w-full sm:w-1/6 focus:ring-2 focus:ring-blue-500"
+                      value={item.quantity}
+                      onChange={e => updateItem(item.id, 'quantity', parseInt(e.target.value) || 1)}
+                      data-tippy-content="Enter the quantity"
+                    />
+                    <button
+                      className="text-red-500 hover:text-red-700 transition-colors"
+                      onClick={() => removeItem(item.id)}
+                      data-tippy-content="Remove this item"
+                    >
+                      Remove
+                    </button>
+                  </div>
+                ))}
+                <button
+                  className="bg-blue-500 text-white px-6 py-2 rounded-lg hover:bg-blue-600 transition-colors"
+                  onClick={addItem}
+                  data-tippy-content="Add a new item to the quote"
+                >
+                  Add Item
+                </button>
+              </div>
+              
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mt-8">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Labor Hours</label>
+                  <input
+                    type="number"
+                    className="border rounded p-2 w-full focus:ring-2 focus:ring-blue-500"
+                    value={laborHours}
+                    onChange={e => setLaborHours(parseFloat(e.target.value) || 0)}
+                    data-tippy-content="Enter total labor hours"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Labor Cost per Hour</label>
+                  <input
+                    type="number"
+                    className="border rounded p-2 w-full focus:ring-2 focus:ring-blue-500"
+                    value={laborCost}
+                    onChange={e => setLaborCost(parseFloat(e.target.value) || 0)}
+                    data-tippy-content="Enter cost per labor hour"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Fixed Overheads</label>
+                  <input
+                    type="number"
+                    className="border rounded p-2 w-full focus:ring-2 focus:ring-blue-500"
+                    value={overheads}
+                    onChange={e => setOverheads(parseFloat(e.target.value) || 0)}
+                    data-tippy-content="Enter fixed overhead costs"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Target Profit Margin (%)</label>
+                  <input
+                    type="number"
+                    className="border rounded p-2 w-full focus:ring-2 focus:ring-blue-500"
+                    value={targetMargin * 100}
+                    onChange={e => setTargetMargin(parseFloat(e.target.value) / 100 || 0)}
+                    data-tippy-content="Enter target profit margin percentage"
+                  />
+                </div>
+              </div>
+              
+              <button
+                className="mt-8 bg-green-500 text-white px-6 py-3 rounded-lg hover:bg-green-600 transition-colors w-full sm:w-auto"
+                onClick={handleSubmit}
+                data-tippy-content="Calculate profitability metrics"
+              >
+                Calculate Profitability
+              </button>
+            </div>
+
+            {results && (
+              <div className="bg-white shadow-lg rounded-lg p-8 animate-slide-in">
+                <h2 className="text-2xl font-semibold mb-6 text-gray-800">Quote Summary</h2>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-6">
+                  <div>
+                    <p className="text-gray-700"><strong>Total Revenue:</strong> ${results.totalRevenue.toFixed(2)}</p>
+                    <p className="text-gray-700"><strong>Total Expenses:</strong> ${results.totalExpenses.toFixed(2)}</p>
+                    <p className="text-gray-700"><strong>Gross Profit:</strong> ${results.grossProfit.toFixed(2)}</p>
+                    <p className="text-gray-700"><strong>Profit Margin:</strong> {(results.totalMargin * 100).toFixed(1)}%</p>
+                  </div>
+                  <div>
+                    <p className="text-gray-700"><strong>Labor Hours:</strong> {laborHours}</p>
+                    <p className="text-gray-700"><strong>Labor Cost:</strong> ${(laborHours * laborCost).toFixed(2)}</p>
+                    <p className="text-gray-700"><strong>Overheads:</strong> ${overheads.toFixed(2)}</p>
+                    <p className="text-gray-700"><strong>Target Margin:</strong> {(targetMargin * 100).toFixed(1)}%</p>
+                  </div>
+                </div>
+                
+                <div className="mb-6">
+                  <p className="text-gray-700">
+                    <strong>Profitability Health:</strong> 
+                    <span className={`inline-block w-4 h-4 rounded-full ${health === 'green' ? 'bg-green-500' : health === 'amber' ? 'bg-yellow-500' : 'bg-red-500'} mr-2`}></span>
+                    {health.toUpperCase()}
+                  </p>
+                </div>
+                
+                <h3 className="text-lg font-semibold mb-3 text-gray-800">AI-Generated Summary</h3>
+                <p className="mb-6 text-gray-700">{aiSummary}</p>
+                
+                <h3 className="text-lg font-semibold mb-3 text-gray-800">AI Suggestions</h3>
+                <ul className="list-disc pl-5 mb-6">
+                  {aiSuggestions.map((suggestion, index) => (
+                    <li key={index} className="mb-2 text-gray-700" contentEditable={true}>{suggestion}</li>
+                  ))}
+                </ul>
+                
+                <h3 className="text-lg font-semibold mb-3 text-gray-800">Line Items</h3>
+                <div className="overflow-x-auto">
+                  <table className="w-full border-collapse">
+                    <thead>
+                      <tr className="bg-gray-100">
+                        <th className="border p-3 text-left text-gray-700">Product</th>
+                        <th className="border p-3 text-right text-gray-700">Cost</th>
+                        <th className="border p-3 text-right text-gray-700">Sell Price</th>
+                        <th className="border p-3 text-right text-gray-700">Quantity</th>
+                        <th className="border p-3 text-right text-gray-700">Margin</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {results.items.map(item => (
+                        <tr key={item.id} className={item.isLowMargin ? 'bg-red-100' : ''}>
+                          <td className="border p-3 text-gray-700">{item.name}</td>
+                          <td className="border p-3 text-right text-gray-700">${item.cost.toFixed(2)}</td>
+                          <td className="border p-3 text-right text-gray-700">${item.sellPrice.toFixed(2)}</td>
+                          <td className="border p-3 text-right text-gray-700">{item.quantity}</td>
+                          <td className="border p-3 text-right text-gray-700">{(item.margin * 100).toFixed(1)}%</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+                
+                <div className="mt-8 flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-4">
+                  <button
+                    className="bg-purple-500 text-white px-6 py-3 rounded-lg hover:bg-purple-600 transition-colors"
+                    onClick={exportToPDF}
+                    data-tippy-content="Download report as PDF file"
+                  >
+                    Export to PDF
+                  </button>
+                  <button
+                    className="bg-blue-500 text-white px-6 py-3 rounded-lg hover:bg-blue-600 transition-colors"
+                    onClick={exportToCSV}
+                    data-tippy-content="Download report as CSV file"
+                  >
+                    Export to CSV
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      );
+    };
+
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<ProfitOptimiser />);
+  </script>
+</body>
+</html>
